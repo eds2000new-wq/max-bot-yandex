@@ -1,0 +1,5 @@
+umaxbot>=0.1.8
+yadisk[sync-defaults]
+pandas
+openpyxl
+python-dotenv>=1.0.0
