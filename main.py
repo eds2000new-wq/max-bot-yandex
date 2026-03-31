@@ -2,8 +2,8 @@
 import os
 import logging
 from datetime import datetime
-from maxbot.bot import Bot                    # 👈 ИСПРАВЛЕНО!
-from maxbot.dispatcher import Dispatcher      # 👈 ИСПРАВЛЕНО!
+from maxbot.bot import Bot
+from maxbot.dispatcher import Dispatcher
 from maxbot.types import Message
 from yandex_disk import YandexDiskClient
 
@@ -98,7 +98,6 @@ def extract_message_data(message: Message) -> list:
         logger.error(f"Ошибка извлечения данных: {e}")
         return None
 
-# Стало (правильно)
 @dp.bot_started
 async def on_bot_started(event):
     logger.info(f"🚀 Бот запущен в чате {event.chat_id}")
@@ -109,7 +108,8 @@ async def main():
     logger.info(f"📁 Файл: {disk.file_path}")
     logger.info(f"🔄 Ключевые слова: {STATUS_KEYWORDS}")
     
-    await dp.start_polling(bot)
+    # ✅ Исправлено: polling запускается через бота
+    await bot.start_polling()
 
 if __name__ == "__main__":
     import asyncio
