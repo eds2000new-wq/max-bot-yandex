@@ -109,7 +109,7 @@ async def main():
     logger.info(f"🔄 Ключевые слова: {STATUS_KEYWORDS}")
     
     # ✅ ПРАВИЛЬНО: polling запускается через бота, а не через диспетчер
-    await bot.start_polling()
+    await dp.start_polling()
 
 if __name__ == "__main__":
     import asyncio
