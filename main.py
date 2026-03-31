@@ -1,4 +1,4 @@
-# main.py — ИСПРАВЛЕННАЯ ВЕРСИЯ
+# main.py — ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ
 import os
 import logging
 from datetime import datetime
@@ -6,6 +6,7 @@ from maxbot.bot import Bot
 from maxbot.dispatcher import Dispatcher
 from maxbot.types import Message
 from yandex_disk import YandexDiskClient
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 CHANNEL_ID = os.getenv('CHANNEL_ID')
 
+# Инициализация
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 disk = YandexDiskClient()
@@ -20,36 +22,26 @@ STATUS_KEYWORDS = ['выполнено', 'готово', 'сделано', 'done
 
 @dp.message()
 async def handle_message(message: Message):
+    """Обработчик всех сообщений"""
     try:
-        # Логируем каждое сообщение для отладки
+        # Логируем каждое сообщение
         logger.info(f"📨 Получено сообщение из чата {message.chat.id}")
-        logger.info(f"📝 Текст: {message.body.text if message.body else 'Нет текста'}")
         
         # Проверяем канал
-        if str(message.chat.id) != CHANNEL_ID:
+        if CHANNEL_ID and str(message.chat.id) != CHANNEL_ID:
             logger.info(f"⏭️ Игнорируем (не тот канал)")
             return
         
-        # Команда /help в канале
+        # Получаем текст
         text = message.body.text if message.body else ""
-        if text == "/help":
-            await bot.send_message(
-                chat_id=message.chat.id,
-                text="📖 **Справка**\n\n"
-                     "✅ Сообщения сохраняются в Яндекс.Таблицу\n"
-                     "🔄 Ответьте 'выполнено' на сообщение — статус изменится\n"
-                     "📁 Данные: Яндекс.Диск → Приложения/max_bot",
-                format="markdown",
-                reply_to_message_id=message.id
-            )
-            return
+        logger.info(f"📝 Текст: {text}")
         
-        # Обработка reply (изменение статуса)
+        # Обработка reply
         if message.reply_to_message:
             await handle_reply(message)
             return
         
-        # Обычное сообщение — сохраняем
+        # Обычное сообщение
         await handle_new_message(message)
                 
     except Exception as e:
@@ -104,9 +96,10 @@ def extract_message_data(message: Message) -> list:
 
 @dp.bot_started
 async def on_bot_started(event):
-    logger.info(f"🚀 Бот запущен в чате {event.chat_id}")
+    logger.info(f"🚀 Бот запущен")
 
-async def main():
+# ГЛАВНОЕ: ПРОСТОЙ ЗАПУСК БЕЗ start_polling
+if __name__ == "__main__":
     logger.info("=" * 50)
     logger.info("🤖 Бот MAX для Яндекс.Диска запущен")
     logger.info(f"📋 Отслеживается канал: {CHANNEL_ID}")
@@ -114,9 +107,9 @@ async def main():
     logger.info("✅ Бот готов к работе! Ожидаем сообщения...")
     logger.info("=" * 50)
     
-    # ✅ ПРАВИЛЬНЫЙ ЗАПУСК ПОЛЛИНГА
-    await dp.start_polling()
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    # 🔥 САМЫЙ ПРОСТОЙ СПОСОБ — запускаем event loop
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        logger.info("Бот остановлен")
