@@ -98,7 +98,8 @@ def extract_message_data(message: Message) -> list:
         logger.error(f"Ошибка извлечения данных: {e}")
         return None
 
-@dp.bot_started()
+# Стало (правильно)
+@dp.bot_started
 async def on_bot_started(event):
     logger.info(f"🚀 Бот запущен в чате {event.chat_id}")
 
