@@ -32,6 +32,8 @@ STATUS_KEYWORDS = ['выполнено', 'готово', 'сделано', 'done
 
 @dp.message()
 async def handle_message(message: Message):
+    logger.info("🟢 Обработчик handle_message был вызван!")
+    logger.info(f"🟢 ID чата, откуда пришло сообщение: {message.chat.id}")
     """Обработчик всех сообщений"""
     try:
         # Временно выводим всё в лог для отладки
