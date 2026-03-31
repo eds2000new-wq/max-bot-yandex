@@ -1,4 +1,4 @@
-# main.py — с ответами в канале
+# main.py — ИСПРАВЛЕННАЯ ВЕРСИЯ
 import os
 import logging
 from datetime import datetime
@@ -21,20 +21,24 @@ STATUS_KEYWORDS = ['выполнено', 'готово', 'сделано', 'done
 @dp.message()
 async def handle_message(message: Message):
     try:
+        # Логируем каждое сообщение для отладки
+        logger.info(f"📨 Получено сообщение из чата {message.chat.id}")
+        logger.info(f"📝 Текст: {message.body.text if message.body else 'Нет текста'}")
+        
         # Проверяем канал
         if str(message.chat.id) != CHANNEL_ID:
+            logger.info(f"⏭️ Игнорируем (не тот канал)")
             return
         
-        # 🆕 ОТВЕТ НА КОМАНДУ /help В КАНАЛЕ
+        # Команда /help в канале
         text = message.body.text if message.body else ""
         if text == "/help":
             await bot.send_message(
                 chat_id=message.chat.id,
                 text="📖 **Справка**\n\n"
-                     "✅ Сообщения автоматически сохраняются в Яндекс.Таблицу\n"
-                     "🔄 Ответьте на любое сообщение словом 'выполнено' — статус изменится\n"
-                     "📁 Данные: Яндекс.Диск → Приложения/max_bot\n"
-                     "❓ Вопросы администратору: @ваш_логин",
+                     "✅ Сообщения сохраняются в Яндекс.Таблицу\n"
+                     "🔄 Ответьте 'выполнено' на сообщение — статус изменится\n"
+                     "📁 Данные: Яндекс.Диск → Приложения/max_bot",
                 format="markdown",
                 reply_to_message_id=message.id
             )
@@ -49,7 +53,7 @@ async def handle_message(message: Message):
         await handle_new_message(message)
                 
     except Exception as e:
-        logger.error(f"❌ Ошибка обработки: {e}")
+        logger.error(f"❌ Ошибка: {e}")
 
 async def handle_reply(message: Message):
     try:
@@ -61,27 +65,27 @@ async def handle_reply(message: Message):
             success = disk.update_status(original_message_id, 'выполнено')
             
             if success:
-                # 🆕 ПОДТВЕРЖДЕНИЕ В КАНАЛ
                 await bot.send_message(
                     chat_id=message.chat.id,
                     text=f"✅ Статус задачи изменён на «выполнено»",
                     reply_to_message_id=original_message_id
                 )
-                logger.info(f"✅ Статус сообщения {original_message_id} обновлен")
+                logger.info(f"✅ Статус {original_message_id} обновлен")
     except Exception as e:
-        logger.error(f"❌ Ошибка обработки reply: {e}")
+        logger.error(f"❌ Ошибка reply: {e}")
 
 async def handle_new_message(message: Message):
     try:
         if disk.check_duplicate(str(message.id)):
+            logger.info(f"⏭️ Дубликат {message.id}")
             return
         
         message_data = extract_message_data(message)
         if message_data:
             disk.append_row(message_data)
-            logger.info(f"✅ Новое сообщение {message.id} сохранено")
+            logger.info(f"✅ Сохранено {message.id}")
     except Exception as e:
-        logger.error(f"❌ Ошибка: {e}")
+        logger.error(f"❌ Ошибка сохранения: {e}")
 
 def extract_message_data(message: Message) -> list:
     try:
@@ -95,20 +99,23 @@ def extract_message_data(message: Message) -> list:
         user = f"@{message.sender.username}" if message.sender and message.sender.username else sender_name
         return [timestamp, message_id, sender_name, sender_id, text, message_type, status, user]
     except Exception as e:
-        logger.error(f"Ошибка извлечения данных: {e}")
+        logger.error(f"Ошибка извлечения: {e}")
         return None
 
 @dp.bot_started
 async def on_bot_started(event):
-    logger.info(f"🚀 Бот запущен")
+    logger.info(f"🚀 Бот запущен в чате {event.chat_id}")
 
 async def main():
-    logger.info("🤖 Бот MAX запущен")
-    logger.info(f"📋 Канал: {CHANNEL_ID}")
+    logger.info("=" * 50)
+    logger.info("🤖 Бот MAX для Яндекс.Диска запущен")
+    logger.info(f"📋 Отслеживается канал: {CHANNEL_ID}")
+    logger.info(f"📁 Файл: {disk.file_path}")
+    logger.info("✅ Бот готов к работе! Ожидаем сообщения...")
+    logger.info("=" * 50)
     
-    # Бесконечный цикл для работы бота
-    while True:
-        await asyncio.sleep(1)
+    # ✅ ПРАВИЛЬНЫЙ ЗАПУСК ПОЛЛИНГА
+    await dp.start_polling()
 
 if __name__ == "__main__":
     import asyncio
