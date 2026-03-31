@@ -1,4 +1,4 @@
-# main.py - исправленная версия
+# main.py - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
 import os
 import logging
 from datetime import datetime
@@ -108,7 +108,7 @@ async def main():
     logger.info(f"📁 Файл: {disk.file_path}")
     logger.info(f"🔄 Ключевые слова: {STATUS_KEYWORDS}")
     
-    # ✅ Исправлено: polling запускается через бота
+    # ✅ ПРАВИЛЬНО: polling запускается через бота, а не через диспетчер
     await bot.start_polling()
 
 if __name__ == "__main__":
