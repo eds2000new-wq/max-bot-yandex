@@ -39,9 +39,9 @@ async def handle_message(message: Message):
         logger.info(f"📝 Текст: {message.body.text if message.body else 'Нет текста'}")
         
         # Проверяем, что сообщение из нужного канала
-        if CHANNEL_ID and str(message.chat.id) != CHANNEL_ID:
-            logger.info(f"⏭️ Игнорируем сообщение не из целевого канала")
-            return
+        # if CHANNEL_ID and str(message.chat.id) != CHANNEL_ID:
+            # logger.info(f"⏭️ Игнорируем сообщение не из целевого канала")
+            # return
         
         # Проверяем, ответ ли это
         if message.reply_to_message:
