@@ -1,4 +1,4 @@
-# yandex_disk.py
+# yandex_disk.py — ИСПРАВЛЕННАЯ ВЕРСИЯ
 import yadisk
 import pandas as pd
 from datetime import datetime
@@ -18,44 +18,58 @@ class YandexDiskClient:
         self.client = yadisk.Client(token=self.token)
         
     def ensure_folder_exists(self):
-        """Создает папку, если её нет"""
-        with self.client:
-            try:
-                self.client.mkdir(self.folder)
-                print(f"📁 Создана папка: {self.folder}")
-            except yadisk.exceptions.PathExistsError:
-                pass
-            except Exception as e:
-                print(f"❌ Ошибка при создании папки: {e}")
+        """Создает папку рекурсивно, если её нет"""
+        try:
+            with self.client:
+                # Проверяем, существует ли папка
+                if not self.client.exists(self.folder):
+                    # Создаем папку с родительскими директориями
+                    self.client.mkdir(self.folder, parent=True)
+                    print(f"📁 Создана папка: {self.folder}")
+                else:
+                    print(f"📁 Папка уже существует: {self.folder}")
+        except Exception as e:
+            print(f"❌ Ошибка при создании папки: {e}")
     
     def init_table(self):
         """Создает таблицу с заголовками, если её нет"""
-        with self.client:
-            if not self.client.exists(self.file_path):
-                # Создаем DataFrame с заголовками (ДОБАВЛЕНЫ status и user)
-                df = pd.DataFrame(columns=[
-                    'timestamp', 'message_id', 'sender_name', 
-                    'sender_id', 'text', 'message_type', 
-                    'status', 'user'
-                ])
-                
-                # Сохраняем в буфер
-                output = io.BytesIO()
-                df.to_excel(output, index=False, engine='openpyxl')
-                output.seek(0)
-                
-                # Загружаем на Яндекс.Диск
-                self.client.upload(output, self.file_path)
-                print(f"✅ Создан файл: {self.file_path}")
-    
-    def append_row(self, values):
-        """
-        Добавление строки в Excel файл
-        values: список значений [timestamp, message_id, sender_name, sender_id, text, message_type, status, user]
-        """
         try:
             with self.client:
+                # Сначала создаем папку, если её нет
+                if not self.client.exists(self.folder):
+                    self.client.mkdir(self.folder, parent=True)
+                    print(f"📁 Создана папка: {self.folder}")
+                
                 # Проверяем существование файла
+                if not self.client.exists(self.file_path):
+                    # Создаем DataFrame с заголовками
+                    df = pd.DataFrame(columns=[
+                        'timestamp', 'message_id', 'sender_name', 
+                        'sender_id', 'text', 'message_type', 
+                        'status', 'user'
+                    ])
+                    
+                    # Сохраняем в буфер
+                    output = io.BytesIO()
+                    df.to_excel(output, index=False, engine='openpyxl')
+                    output.seek(0)
+                    
+                    # Загружаем на Яндекс.Диск
+                    self.client.upload(output, self.file_path)
+                    print(f"✅ Создан файл: {self.file_path}")
+                else:
+                    print(f"📁 Файл уже существует: {self.file_path}")
+        except Exception as e:
+            print(f"❌ Ошибка при создании таблицы: {e}")
+    
+    def append_row(self, values):
+        """Добавление строки в Excel файл"""
+        try:
+            with self.client:
+                # Убеждаемся, что папка и файл существуют
+                if not self.client.exists(self.folder):
+                    self.client.mkdir(self.folder, parent=True)
+                
                 if not self.client.exists(self.file_path):
                     self.init_table()
                 
@@ -81,39 +95,31 @@ class YandexDiskClient:
                 
                 print(f"✅ Данные сохранены. Всего строк: {len(df)}")
                 return True
-                
         except Exception as e:
             print(f"❌ Ошибка при сохранении: {e}")
             return False
     
     def update_status(self, message_id, new_status):
-        """
-        Обновление статуса сообщения по ID
-        """
+        """Обновление статуса сообщения по ID"""
         try:
             with self.client:
                 if not self.client.exists(self.file_path):
                     return False
                     
-                # Скачиваем файл
                 buffer = io.BytesIO()
                 self.client.download(self.file_path, buffer)
                 buffer.seek(0)
                 
-                # Читаем Excel
                 df = pd.read_excel(buffer, engine='openpyxl')
-                
-                # Ищем сообщение по ID
                 mask = df['message_id'] == str(message_id)
+                
                 if not mask.any():
                     print(f"❌ Сообщение {message_id} не найдено")
                     return False
                 
-                # Обновляем статус
                 df.loc[mask, 'status'] = new_status
                 df.loc[mask, 'timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") + " (обновлено)"
                 
-                # Сохраняем
                 output = io.BytesIO()
                 df.to_excel(output, index=False, engine='openpyxl')
                 output.seek(0)
@@ -121,13 +127,12 @@ class YandexDiskClient:
                 
                 print(f"✅ Статус сообщения {message_id} обновлен на '{new_status}'")
                 return True
-                
         except Exception as e:
             print(f"❌ Ошибка при обновлении статуса: {e}")
             return False
     
     def check_duplicate(self, message_id):
-        """Проверка на дубликат по ID сообщения"""
+        """Проверка на дубликат"""
         try:
             with self.client:
                 if not self.client.exists(self.file_path):
@@ -136,7 +141,6 @@ class YandexDiskClient:
                 buffer = io.BytesIO()
                 self.client.download(self.file_path, buffer)
                 buffer.seek(0)
-                
                 df = pd.read_excel(buffer, engine='openpyxl')
                 return str(message_id) in df['message_id'].astype(str).values
         except:
