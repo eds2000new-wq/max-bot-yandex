@@ -1,9 +1,9 @@
-# main.py (полная рабочая версия)
+# main.py - исправленная версия
 import os
 import logging
 from datetime import datetime
-from maxbot import Bot
-from maxbot.dispatcher import Dispatcher
+from maxbot.bot import Bot                    # 👈 ИСПРАВЛЕНО!
+from maxbot.dispatcher import Dispatcher      # 👈 ИСПРАВЛЕНО!
 from maxbot.types import Message
 from yandex_disk import YandexDiskClient
 
