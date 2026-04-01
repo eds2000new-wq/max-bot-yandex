@@ -164,7 +164,10 @@ async def test_connection():
     try:
         me = await bot.get_me()
         logger.info(f"✅ Подключение к MAX установлено!")
-        logger.info(f"🤖 Информация о боте: ID: {me.id}, Имя: {me.name}")
+        # API возвращает словарь, поэтому используем .get()
+        bot_id = me.get('id') if isinstance(me, dict) else getattr(me, 'id', 'неизвестно')
+        bot_name = me.get('name') if isinstance(me, dict) else getattr(me, 'name', 'неизвестно')
+        logger.info(f"🤖 Информация о боте: ID: {bot_id}, Имя: {bot_name}")
         return True
     except Exception as e:
         logger.error(f"❌ Ошибка подключения к MAX: {e}")
