@@ -61,6 +61,8 @@ async def handle_message(message: Message):
         logger.error(f"❌ Ошибка обработки: {e}")
 
 async def handle_reply(message: Message):
+    logger.info(f"🔍 [DEBUG] Бот получил сообщение из чата ID: {message.chat.id}, тип: {message.chat.type}")
+    logger.info(f"🔍 [DEBUG] Текст: {message.body.text if message.body else 'Нет текста'}")
     """Обработка ответов на сообщения"""
     try:
         reply_text = message.body.text if hasattr(message, 'body') and message.body else ""
